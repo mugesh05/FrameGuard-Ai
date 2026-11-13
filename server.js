@@ -1,70 +1,64 @@
 const http = require('http');
-const fs = require('fs');
+const fs   = require('fs');
 const path = require('path');
 
-const PORT = 3300;
-const BASE_DIR = __dirname;
-const CONSOLE_HTML_PATH = 'C:/Users/acer/.gemini/antigravity/brain/14ce3b18-73f4-4468-ac35-841a41dcc0d5/frameguard_console.html';
+const PORT     = process.env.PORT || 3300;
+const BASE_DIR = path.join(__dirname, 'public');
+const PDF_PATH = path.join(__dirname, 'submission', 'round1-answers.pdf');
 
-const MIME_TYPES = {
-  '.html': 'text/html',
-  '.css': 'text/css',
-  '.js': 'text/javascript',
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.css':  'text/css',
+  '.js':   'text/javascript',
   '.json': 'application/json',
-  '.pdf': 'application/pdf',
-  '.md': 'text/markdown',
-  '.txt': 'text/plain',
-  '.jpg': 'image/jpeg',
-  '.png': 'image/png'
+  '.pdf':  'application/pdf',
+  '.md':   'text/plain',
+  '.txt':  'text/plain',
+  '.jpg':  'image/jpeg',
+  '.png':  'image/png',
+  '.ico':  'image/x-icon',
 };
 
 const server = http.createServer((req, res) => {
   const urlPath = req.url.split('?')[0];
 
-  // Root or console
-  if (urlPath === '/' || urlPath === '/index.html' || urlPath === '/console') {
-    if (fs.existsSync(CONSOLE_HTML_PATH)) {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      fs.createReadStream(CONSOLE_HTML_PATH).pipe(res);
-      return;
-    }
-  }
-
   // Submission PDF
   if (urlPath === '/round1-answers.pdf') {
-    const pdfPath = path.join(BASE_DIR, 'submission', 'round1-answers.pdf');
-    if (fs.existsSync(pdfPath)) {
+    if (fs.existsSync(PDF_PATH)) {
       res.writeHead(200, { 'Content-Type': 'application/pdf' });
-      fs.createReadStream(pdfPath).pipe(res);
-      return;
+      fs.createReadStream(PDF_PATH).pipe(res);
+    } else {
+      res.writeHead(404); res.end('PDF not found');
     }
-  }
-
-  // Safe file serving within BASE_DIR
-  const safePath = path.normalize(path.join(BASE_DIR, urlPath)).replace(/\\/g, '/');
-  if (safePath.startsWith(BASE_DIR.replace(/\\/g, '/')) && fs.existsSync(safePath)) {
-    const stat = fs.statSync(safePath);
-    if (stat.isFile()) {
-      const ext = path.extname(safePath).toLowerCase();
-      const mime = MIME_TYPES[ext] || 'application/octet-stream';
-      res.writeHead(200, { 'Content-Type': mime });
-      fs.createReadStream(safePath).pipe(res);
-      return;
-    }
-  }
-
-  // Fallback to console
-  if (fs.existsSync(CONSOLE_HTML_PATH)) {
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    fs.createReadStream(CONSOLE_HTML_PATH).pipe(res);
     return;
   }
 
-  res.writeHead(404, { 'Content-Type': 'text/plain' });
-  res.end('404 Not Found');
+  // Static files from /public
+  let filePath = path.join(BASE_DIR, urlPath === '/' ? 'index.html' : urlPath);
+  const safe = path.normalize(filePath);
+  if (!safe.startsWith(BASE_DIR)) {
+    res.writeHead(403); res.end('Forbidden'); return;
+  }
+
+  if (fs.existsSync(safe) && fs.statSync(safe).isFile()) {
+    const ext  = path.extname(safe).toLowerCase();
+    const mime = MIME[ext] || 'application/octet-stream';
+    res.writeHead(200, { 'Content-Type': mime });
+    fs.createReadStream(safe).pipe(res);
+    return;
+  }
+
+  // SPA fallback → index.html
+  const index = path.join(BASE_DIR, 'index.html');
+  if (fs.existsSync(index)) {
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    fs.createReadStream(index).pipe(res);
+    return;
+  }
+
+  res.writeHead(404); res.end('Not found');
 });
 
-server.listen(PORT, '127.0.0.1', () => {
-  console.log(`FrameGuard AI Web Console is running at http://localhost:${PORT}`);
-  console.log(`Open http://localhost:${PORT} in your browser.`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`FrameGuard AI running on port ${PORT}`);
 });

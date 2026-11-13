@@ -1,0 +1,23 @@
+{
+  "name": "frameguard-creative-audit",
+  "version": "1.0.0",
+  "description": "FrameGuard AI — Creative Project Delivery Auditor | UGREEN AI NAS Hackathon 2026",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "ugreen",
+    "nas",
+    "hackathon",
+    "creative-audit",
+    "uliya",
+    "ugos"
+  ],
+  "author": "mugesh105",
+  "license": "MIT"
+}
