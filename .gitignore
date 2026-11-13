@@ -1,0 +1,15 @@
+# FrameGuard AI — Gitignore
+
+# Node runtime artifacts (not part of the Skill package)
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Scratch files
+*.tmp
+*.temp
